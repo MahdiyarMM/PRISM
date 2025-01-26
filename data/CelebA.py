@@ -5,7 +5,24 @@ from PIL import Image
 import numpy as np
 from wilds.datasets.wilds_dataset import WILDSDataset
 from wilds.common.grouper import CombinatorialGrouper
-from wilds.common.metrics.all_metrics import Accuracy
+from wilds.common.metrics.metric import  ElementwiseMetric
+from wilds.common.utils import minimum
+
+
+class Accuracy(ElementwiseMetric):
+    def __init__(self, prediction_fn=None, name=None):
+        self.prediction_fn = prediction_fn
+        if name is None:
+            name = 'acc'
+        super().__init__(name=name)
+
+    def _compute_element_wise(self, y_pred, y_true):
+        if self.prediction_fn is not None:
+            y_pred = self.prediction_fn(y_pred)
+        return (y_pred==y_true).float()
+
+    def worst(self, metrics):
+        return minimum(metrics)
 
 class CelebADataset(WILDSDataset):
     """
