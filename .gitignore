@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+data/celebA_v1.0/
+data/waterbirds_v1.0/
+dev.ipynb
 
 # C extensions
 *.so
