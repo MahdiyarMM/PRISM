@@ -1,5 +1,24 @@
 import torch
 from tqdm import tqdm
+import clip
+
+def orth_transforamtion_calculation(args, model, spurious_words):
+    print("Orthogonalizing the embedding space w.r.t. {}".format(spurious_words))
+
+    # Prepare spurious words and compute projection matrix
+    spurious_tokens = clip.tokenize(spurious_words).to(args.device)
+    with torch.no_grad():
+        spurious_embeddings = model.encode_text(spurious_tokens)
+        spurious_embeddings /= spurious_embeddings.norm(dim=-1, keepdim=True)
+
+    # Compute projection matrix to remove spurious embeddings
+    V = spurious_embeddings.T  # Shape: (embedding_dim, num_spurious_words)
+    V = V.to(torch.float32)  # Ensure the dtype is float32 for inversion
+    VtV = V.T @ V  # Shape: (num_spurious_words, num_spurious_words)
+    VtV_inv = torch.inverse(VtV)  # Perform inversion in float32
+    P = torch.eye(V.shape[0], device=args.device, dtype=torch.float32) - V @ VtV_inv @ V.T  # Projection matrix
+    return P
+
 
 def classify_images(args, model, text_embeddings, test_loader, P=None, transformer = None, description="Classifying"):
     correct = 0

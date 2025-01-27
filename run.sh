@@ -1,0 +1,1 @@
+python main.py --mitigation orth --dataset WaTerBirds
