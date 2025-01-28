@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from tqdm import tqdm
 import clip
 
@@ -131,3 +132,73 @@ def print_per_class(args, eval_results):
         print(eval_results[0]['acc_y:landbird_background:land'])
         print(eval_results[0]['acc_y:waterbird_background:water'])
         print(eval_results[0]['acc_y:waterbird_background:land'])
+
+
+
+def contrastive_loss(embeddings, margin=0.5):
+    """
+    Compute contrastive loss using cosine similarity for given positive and negative pairs.
+    
+    Args:
+        embeddings_neg1: First embedding in the first negative pair (shape: [batch, 1, 768]).
+        embeddings_neg2: Second embedding in the first negative pair (shape: [batch, 1, 768]).
+        embeddings_pos1: First embedding in the positive pair (shape: [batch, 1, 768]).
+        embeddings_pos2: Second embedding in the positive pair (shape: [batch, 1, 768]).
+        margin: Margin for dissimilarity (default: 0.5).
+    
+    Returns:
+        loss: Contrastive loss value.
+    """
+    # Normalize embeddings along the last dimension
+    embeddings_neg1 = F.normalize(embeddings[0], dim=-1)
+    embeddings_neg2 = F.normalize(embeddings[1], dim=-1)
+    embeddings_pos1 = F.normalize(embeddings[2], dim=-1)
+    embeddings_pos2 = F.normalize(embeddings[3], dim=-1)
+
+    # Compute cosine similarity
+    sim_neg = F.cosine_similarity(embeddings_neg1, embeddings_neg2, dim=-1)  # Shape: [batch, 1]
+    sim_pos = F.cosine_similarity(embeddings_pos1, embeddings_pos2, dim=-1)  # Shape: [batch, 1]
+
+    # Loss components
+    positive_loss = 1 - sim_pos  # Maximize similarity for positive pairs
+    negative_loss = torch.relu(sim_neg - margin)  # Enforce margin for dissimilarity in negative pairs
+
+    # Combine losses (mean across the batch)
+    loss = positive_loss.mean() + negative_loss.mean()
+
+    return loss
+
+
+def sentence_list_to_embedding(args, model, sentences):
+    st = [clip.tokenize(sentence).to(args.device) for sentence in sentences]
+    se = [model.encode_text(token) for token in st]
+    se = [embedding / embedding.norm(dim=-1, keepdim=True) for embedding in se]
+    return torch.stack(se)
+
+def train_transformation(args, model, textloader, transformer):
+    optimizer = torch.optim.Adam(transformer.parameters(), lr=0.1)
+    for epoch in range(args.epochs):
+        total_loss = 0
+        iter = 0
+
+        for senetnces_list in tqdm(textloader):
+            optimizer.zero_grad()
+
+            embeddigs_list = [sentence_list_to_embedding(args, model, sentences) for sentences in senetnces_list]
+
+            # froward pass
+            transformed_embeddings = [transformer(embeddings.float()) for embeddings in embeddigs_list]
+            
+            # loss
+            loss = contrastive_loss(transformed_embeddings)
+            # loss = sim_loss(transformed_embeddings)
+
+            # backward pass
+            loss.backward()
+
+            # update
+            optimizer.step()
+            total_loss += loss.item()
+            iter += 1
+
+        print(f"Epoch: {epoch}, Loss: {total_loss/iter}")

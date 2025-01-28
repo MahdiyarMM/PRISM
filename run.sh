@@ -1,1 +1,1 @@
-python main.py --mitigation orth --dataset WaTerBirds
+python main.py --dataset WaTerBirds --mitigation train --epoch 6 --wandb load_transformer
