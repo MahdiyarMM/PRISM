@@ -82,7 +82,7 @@ def main(args):
     P = None
 
     if args.mitigation is not None:
-        if args.mitigation == 'orth':
+        if args.mitigation == 'orth' or args.init_weight == 'orth':
             if args.dataset == 'celeba':
                 spurious_words = ["Man", "Woman"]
             elif args.dataset == 'waterbirds':
@@ -90,9 +90,11 @@ def main(args):
 
             P = orth_transforamtion_calculation(args, model, spurious_words)
         
-        elif args.mitigation == 'train':
+        if args.mitigation == 'train':
             text_loader = get_SSL_dataset(args)
             transformer = get_transformer(args)
+            if args.init_weight == 'orth' and args.num_bases == 0:
+                transformer.transformer.weight.data = P
             # transformer.load_state_dict(torch.load('transformer.pth'))
             train_transformation(args, model, text_loader, transformer)
             
@@ -148,6 +150,8 @@ if __name__ == "__main__":
                         , help='Learning rate for training the transformation')
     args.add_argument('--wd', type=float, default=0
                         , help='Weight decay for training the transformation')
+    args.add_argument('--init_weight', type=str.lower, default='random'
+                        , help='How to initialize the weights [random, orth]')
 
     args = args.parse_args()
     args.device = ['cuda' if torch.cuda.is_available() else 'cpu'][0]

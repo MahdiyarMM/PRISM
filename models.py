@@ -28,10 +28,13 @@ class EmbeddingOrthogonalizer(torch.nn.Module):
     
 
 def get_transformer(args):  
-    if args.CLIP_model == 'ViT-B/32':
+    if args.CLIP_model == 'ViT-L/14@336px':
         embed_dim = 768
+    elif args.CLIP_model == 'ViT-B/16':
+        embed_dim = 512
     elif args.CLIP_model == 'RN50':
         embed_dim = 1024 
+
     if args.num_bases == 0:
         transformer = embedding_transformer(embed_dim=embed_dim)
     else:
