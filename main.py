@@ -18,6 +18,7 @@ import wandb
 
 
 def main(args):
+    torch.manual_seed(args.seed)
     if args.wandb is not None:
         wandb.init(project='CLIPSB',name=args.wandb, config=args)
 
@@ -77,7 +78,7 @@ def main(args):
     text_embeddings /= text_embeddings.norm(dim=-1, keepdim=True)
     text_embeddings = text_embeddings.to(torch.float32)
 
-    transfromer = None
+    transformer = None
     P = None
 
     if args.mitigation is not None:
@@ -92,8 +93,8 @@ def main(args):
         elif args.mitigation == 'train':
             text_loader = get_SSL_dataset(args)
             transformer = get_transformer(args)
-            transformer.load_state_dict(torch.load('transformer.pth'))
-            # train_transformation(args, model, text_loader, transformer)
+            # transformer.load_state_dict(torch.load('transformer.pth'))
+            train_transformation(args, model, text_loader, transformer)
             
         
         
@@ -113,7 +114,8 @@ def main(args):
 
     print(f"Adjusted Average Accuracy: {adj_acc_avg:.3f}")
     print(f"Worst-Group Accuracy: {worst_group_acc:.3f}")
-    wandb.log({"Adjusted Average Accuracy": adj_acc_avg, "Worst-Group Accuracy": worst_group_acc})
+    if args.wandb is not None:
+        wandb.log({"Adjusted Average Accuracy": adj_acc_avg, "Worst-Group Accuracy": worst_group_acc})
 
     if args.per_group:
         print_per_class(args, eval_results)
@@ -128,7 +130,7 @@ if __name__ == "__main__":
                     help='CLIP model to use [ViT-B/32, RN50, RN101, RN50x4, ViT-B/16, ViT-L/14@224px, ViT-L/14@336px]')
     args.add_argument('--dataset', type=str.lower, default='waterbirds',
                         help='dataset to use [waterbirds, celeba]')
-    args.add_argument('--epochs', type=int, default=5
+    args.add_argument('--epochs', type=int, default=1
                         , help='number of epochs to train the embedding transformer')
     args.add_argument('--per_group', type=bool, default=False
                         , help='whether to print accuracy per group')
@@ -138,6 +140,14 @@ if __name__ == "__main__":
                         , help='Free transformation if zero otherwise number of bases for orthogonalization')
     args.add_argument('--wandb', type=str, default=None
                         , help='wandb run name')
+    args.add_argument('--num_samples', type=int, default=500
+                        , help='Number of samples to use for training the transformation')
+    args.add_argument('--seed', type=int, default=42
+                        , help='Random seed')
+    args.add_argument('--lr', type=float, default=1e-1
+                        , help='Learning rate for training the transformation')
+    args.add_argument('--wd', type=float, default=0
+                        , help='Weight decay for training the transformation')
 
     args = args.parse_args()
     args.device = ['cuda' if torch.cuda.is_available() else 'cpu'][0]

@@ -2,55 +2,128 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 
+def generate_random_list(n, m, seed=42):
+    """
+    Generate a list of n integers randomly filled with numbers from [1, m]
+    where m < n, using torch with controlled seed.
+    
+    Args:
+        n (int): Number of elements in the list.
+        m (int): Upper bound (inclusive) for random numbers.
+        seed (int): Random seed for reproducibility.
+
+    Returns:
+        list: A list of n integers in range [1, m].
+    """
+    torch.manual_seed(seed)  # Set the fixed seed for reproducibility
+    random_list = torch.randint(0, m , (n,))  # Generate n numbers from [1, m]
+    return random_list.tolist()  # Convert to a Python list
+
+
+# class Bird_SSL_Dataset(Dataset):
+#     def __init__(self, birds, backgrounds, num_samples=100):
+#         super().__init__()
+#         self.num_samples = num_samples
+        
+#         # Combine birds and backgrounds for sampling
+#         self.birds = birds[0] + birds[1]
+#         self.backgrounds = backgrounds[0] + backgrounds[1]
+        
+#         # Create bird type labels
+#         self.bird_type_labels = {bird: 0 for bird in birds[0]}  # 0 for land birds
+#         self.bird_type_labels.update({bird: 1 for bird in birds[1]})  # 1 for water birds
+        
+#         # Create background type labels
+#         self.background_type_labels = {bg: 0 for bg in backgrounds[1]}  # 0 for land background
+#         self.background_type_labels.update({bg: 1 for bg in backgrounds[0]})  # 1 for water background
+    
+#     def __len__(self):
+#         return self.num_samples
+    
+#     def __getitem__(self, idx):
+#         # Randomly sample a bird and a background
+#         bird1 = self.birds[torch.randint(len(self.birds), (1,)).item()]
+#         background1 = self.backgrounds[torch.randint(len(self.backgrounds), (1,)).item()]
+
+#         bird2 = self.birds[torch.randint(len(self.birds), (1,)).item()]
+#         while bird2 == bird1:
+#             bird2 = self.birds[torch.randint(len(self.birds), (1,)).item()]
+        
+#         background2 = self.backgrounds[torch.randint(len(self.backgrounds), (1,)).item()]
+#         while background2 == background1:
+#             background2 = self.backgrounds[torch.randint(len(self.backgrounds), (1,)).item()]
+
+        
+
+#         # Create the sentence for negative samples
+#         sentence_neg_1 = f"A photo of a {bird1}"
+#         sentence_neg_2 = f"A photo of a {bird2}"
+        
+#         # create the sentence for positive samples
+#         sentence_pos_1 = f"A photo of a {bird1} in a {background1}."
+#         sentence_pos_2 = f"A photo of a {bird1} in a {background2}."
+
+#         sentences = [sentence_neg_1, sentence_neg_2, sentence_pos_1, sentence_pos_2]
+
+
+        
+#         return sentences
+
 class Bird_SSL_Dataset(Dataset):
-    def __init__(self, birds, backgrounds, num_samples=100):
+    def __init__(self, birds, backgrounds, num_samples=100, seed = 42):
         super().__init__()
         self.num_samples = num_samples
-        
-        # Combine birds and backgrounds for sampling
-        self.birds = birds[0] + birds[1]
-        self.backgrounds = backgrounds[0] + backgrounds[1]
-        
-        # Create bird type labels
-        self.bird_type_labels = {bird: 0 for bird in birds[0]}  # 0 for land birds
-        self.bird_type_labels.update({bird: 1 for bird in birds[1]})  # 1 for water birds
-        
-        # Create background type labels
-        self.background_type_labels = {bg: 0 for bg in backgrounds[1]}  # 0 for land background
-        self.background_type_labels.update({bg: 1 for bg in backgrounds[0]})  # 1 for water background
-    
+        self.birds1 = birds[0]
+        self.birds2 = birds[1]
+
+        self.backgrounds1 = backgrounds[0]
+        self.backgrounds2 = backgrounds[1]
+
+        # create the shuffled list of birds and backgrounds
+        self.birds1_idx = generate_random_list(num_samples, len(self.birds1), seed=seed)
+        self.birds2_idx = generate_random_list(num_samples, len(self.birds2), seed=seed)
+        self.backgrounds1_idx = generate_random_list(num_samples, len(self.backgrounds1), seed=seed)
+        self.backgrounds2_idx = generate_random_list(num_samples, len(self.backgrounds2), seed=seed)
+        self.bird1vsbird2 = generate_random_list(num_samples, 2, seed=seed)
+
     def __len__(self):
         return self.num_samples
-    
+
     def __getitem__(self, idx):
         # Randomly sample a bird and a background
-        bird1 = self.birds[torch.randint(len(self.birds), (1,)).item()]
-        background1 = self.backgrounds[torch.randint(len(self.backgrounds), (1,)).item()]
-
-        bird2 = self.birds[torch.randint(len(self.birds), (1,)).item()]
-        while bird2 == bird1:
-            bird2 = self.birds[torch.randint(len(self.birds), (1,)).item()]
+        bird1_idx = self.birds1_idx[idx]
+        bird2_idx = self.birds2_idx[idx]
+        background1_idx = self.backgrounds1_idx[idx]
+        background2_idx = self.backgrounds2_idx[idx]
         
-        background2 = self.backgrounds[torch.randint(len(self.backgrounds), (1,)).item()]
-        while background2 == background1:
-            background2 = self.backgrounds[torch.randint(len(self.backgrounds), (1,)).item()]
-
+        bird1 = self.birds1[bird1_idx]  
+        bird2 = self.birds2[bird2_idx]
         
+        background1 = self.backgrounds1[background1_idx]
+        background2 = self.backgrounds2[background2_idx]
+
+
 
         # Create the sentence for negative samples
         sentence_neg_1 = f"A photo of a {bird1}"
         sentence_neg_2 = f"A photo of a {bird2}"
         
+        if self.bird1vsbird2[idx] == 1:
+            pos_bird = bird1
+        else:
+            pos_bird = bird2
+
         # create the sentence for positive samples
-        sentence_pos_1 = f"A photo of a {bird1} in a {background1}."
-        sentence_pos_2 = f"A photo of a {bird1} in a {background2}."
+        sentence_pos_1 = f"A photo of a {pos_bird} in a {background1}."
+        sentence_pos_2 = f"A photo of a {pos_bird} in a {background2}."
 
         sentences = [sentence_neg_1, sentence_neg_2, sentence_pos_1, sentence_pos_2]
 
 
         
         return sentences
-    
+
+
 class Celeb_SSL_Dataset(Dataset):
     def __init__(self, celebs, hair, num_samples=100):
         super().__init__()
@@ -176,10 +249,10 @@ def get_SSL_dataset(args):
 
 
     if args.dataset == 'celeba':
-        textset = Celeb_SSL_Dataset(celebs, hair, num_samples=50)
+        textset = Celeb_SSL_Dataset(celebs, hair, num_samples=args.num_samples)
         textloader = DataLoader(textset, batch_size=3, shuffle=True)
     elif args.dataset == 'waterbirds':
-        textset = Bird_SSL_Dataset( birds, backgrounds, num_samples=50)
+        textset = Bird_SSL_Dataset( birds, backgrounds, num_samples=args.num_samples, seed=args.seed)
         textloader = DataLoader(textset, batch_size=3, shuffle=True)
     
     print("data example")

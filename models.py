@@ -27,11 +27,15 @@ class EmbeddingOrthogonalizer(torch.nn.Module):
         return x
     
 
-def get_transformer(args):   
+def get_transformer(args):  
+    if args.CLIP_model == 'ViT-B/32':
+        embed_dim = 768
+    elif args.CLIP_model == 'RN50':
+        embed_dim = 1024 
     if args.num_bases == 0:
-        transformer = embedding_transformer()
+        transformer = embedding_transformer(embed_dim=embed_dim)
     else:
-        transformer = EmbeddingOrthogonalizer(num_bases=args.num_bases)
+        transformer = EmbeddingOrthogonalizer(embed_dim=embed_dim, num_bases=args.num_bases)
         
     transformer.to(args.device)
     return transformer

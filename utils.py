@@ -3,6 +3,9 @@ import torch.nn.functional as F
 from tqdm import tqdm
 import clip
 
+
+
+
 def orth_transforamtion_calculation(args, model, spurious_words):
     print("Orthogonalizing the embedding space w.r.t. {}".format(spurious_words))
 
@@ -176,7 +179,7 @@ def sentence_list_to_embedding(args, model, sentences):
     return torch.stack(se)
 
 def train_transformation(args, model, textloader, transformer):
-    optimizer = torch.optim.Adam(transformer.parameters(), lr=0.1)
+    optimizer = torch.optim.Adam(transformer.parameters(), lr=args.lr, weight_decay=args.wd)
     for epoch in range(args.epochs):
         total_loss = 0
         iter = 0
