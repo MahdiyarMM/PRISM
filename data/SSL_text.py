@@ -130,46 +130,100 @@ class Celeb_SSL_Dataset(Dataset):
         self.num_samples = num_samples
         
         # Combine birds and backgrounds for sampling
-        self.celebs = celebs[0] + celebs[1]
-        self.hair = hair[0] + hair[1]
-        
-        # Create bird type labels
-        self.hair_type_labels = {h: 0 for h in hair[0]}  # 0 for land birds
-        self.hair_type_labels.update({h: 1 for h in hair[1]})  # 1 for water birds
-        
-        # Create background type labels
-        self.celebs_type_labels = {c: 0 for c in celebs[0]}  # 0 for land background
-        self.celebs_type_labels.update({c: 1 for c in celebs[1]})  # 1 for water background
+        self.celebs1 = celebs[0]
+        self.celebs2 = celebs[1]
+        self.hair1 = hair[0]
+        self.hair2 = hair[1]
+
+        # create the shuffled list of celebrities and hairs
+        self.celebs1_idx = generate_random_list(num_samples, len(self.celebs1))
+        self.celebs2_idx = generate_random_list(num_samples, len(self.celebs2))
+        self.hair1_idx = generate_random_list(num_samples, len(self.hair1))
+        self.hair2_idx = generate_random_list(num_samples, len(self.hair2))
+        self.hair1vshair2 = generate_random_list(num_samples, 2)
+
     
     def __len__(self):
         return self.num_samples
     
     def __getitem__(self, idx):
         # Randomly sample a bird and a background
-        hair1 = self.hair[torch.randint(len(self.hair), (1,)).item()]
-        celeb1 = self.celebs[torch.randint(len(self.celebs), (1,)).item()]
+        celeb1_idx = self.celebs1_idx[idx]
+        celeb2_idx = self.celebs2_idx[idx]
+        hair1_idx = self.hair1_idx[idx]
+        hair2_idx = self.hair2_idx[idx]
 
-        hair2 = self.hair[torch.randint(len(self.hair), (1,)).item()]
-        while hair1 == hair2:
-            hair2 = self.hair[torch.randint(len(self.hair), (1,)).item()]
-        
-        celeb2 = self.celebs[torch.randint(len(self.celebs), (1,)).item()]
-        while celeb1 == celeb2:
-            celeb2 = self.celebs[torch.randint(len(self.celebs), (1,)).item()]
+        celeb1 = self.celebs1[celeb1_idx]
+        celeb2 = self.celebs2[celeb2_idx]
 
-        
+        hair1 = self.hair1[hair1_idx]
+        hair2 = self.hair2[hair2_idx]
 
+
+    
         # Create the sentence for negative samples
         sentence_neg_1 = f"A photo of a person with a {hair1} hair"
         sentence_neg_2 = f"A photo of a person with a {hair2} hair"
         
+        if self.hair1vshair2[idx] == 1:
+            pos_hair = hair1
+        else:   
+            pos_hair = hair2
         # create the sentence for positive samples
-        sentence_pos_1 = f"A photo of {celeb1} with a {hair1} hair."
-        sentence_pos_2 = f"A photo of {celeb2} with a {hair1} hair."
+        sentence_pos_1 = f"A photo of {celeb1} with a {pos_hair} hair."
+        sentence_pos_2 = f"A photo of {celeb2} with a {pos_hair} hair."
 
         sentences = [sentence_neg_1, sentence_neg_2, sentence_pos_1, sentence_pos_2]
 
         return sentences
+    
+
+# class Celeb_SSL_Dataset(Dataset):
+#     def __init__(self, celebs, hair, num_samples=100):
+#         super().__init__()
+#         self.num_samples = num_samples
+        
+#         # Combine birds and backgrounds for sampling
+#         self.celebs = celebs[0] + celebs[1]
+#         self.hair = hair[0] + hair[1]
+        
+#         # Create bird type labels
+#         self.hair_type_labels = {h: 0 for h in hair[0]}  # 0 for land birds
+#         self.hair_type_labels.update({h: 1 for h in hair[1]})  # 1 for water birds
+        
+#         # Create background type labels
+#         self.celebs_type_labels = {c: 0 for c in celebs[0]}  # 0 for land background
+#         self.celebs_type_labels.update({c: 1 for c in celebs[1]})  # 1 for water background
+    
+#     def __len__(self):
+#         return self.num_samples
+    
+#     def __getitem__(self, idx):
+#         # Randomly sample a bird and a background
+#         hair1 = self.hair[torch.randint(len(self.hair), (1,)).item()]
+#         celeb1 = self.celebs[torch.randint(len(self.celebs), (1,)).item()]
+
+#         hair2 = self.hair[torch.randint(len(self.hair), (1,)).item()]
+#         while hair1 == hair2:
+#             hair2 = self.hair[torch.randint(len(self.hair), (1,)).item()]
+        
+#         celeb2 = self.celebs[torch.randint(len(self.celebs), (1,)).item()]
+#         while celeb1 == celeb2:
+#             celeb2 = self.celebs[torch.randint(len(self.celebs), (1,)).item()]
+
+        
+
+#         # Create the sentence for negative samples
+#         sentence_neg_1 = f"A photo of a person with a {hair1} hair"
+#         sentence_neg_2 = f"A photo of a person with a {hair2} hair"
+        
+#         # create the sentence for positive samples
+#         sentence_pos_1 = f"A photo of {celeb1} with a {hair1} hair."
+#         sentence_pos_2 = f"A photo of {celeb2} with a {hair1} hair."
+
+#         sentences = [sentence_neg_1, sentence_neg_2, sentence_pos_1, sentence_pos_2]
+
+#         return sentences
     
 
 def get_SSL_dataset(args):
@@ -220,26 +274,26 @@ def get_SSL_dataset(args):
         "Ariana Grande", "Kylie Jenner"
     ]
 
-    male_celebrities = ['man', 'male', 'mester']
-    female_celebrities = ['woman', 'female', 'lady']
+    # male_celebrities = ['man', 'male', 'mester']
+    # female_celebrities = ['woman', 'female', 'lady']
 
     celebs = [male_celebrities , female_celebrities]
 
     # # List of words describing dark hair
-    # dark_hair = [
-    #     "jet black", "raven", "midnight", "onyx", "charcoal",
-    #     "ebony", "deep brown", "espresso", "mahogany", "sable",
-    #     "chocolate", "ink", "coal", "obsidian", "smoky",
-    #     "shadowy", "chestnut", "mocha", "brunette", "noir"
-    # ]
+    dark_hair = [
+        "jet black", "raven", "midnight", "onyx", "charcoal",
+        "ebony", "deep brown", "espresso", "mahogany", "sable",
+        "chocolate", "ink", "coal", "obsidian", "smoky",
+        "shadowy", "chestnut", "mocha", "brunette", "noir"
+    ]
 
-    # # List of words describing blond hair
-    # blond_hair = [
-    #     "golden", "honey", "platinum", "sandy", "sun-kissed",
-    #     "buttery", "ash blond", "straw", "champagne", "caramel",
-    #     "pearl", "flaxen", "vanilla", "wheat", "light gold",
-    #     "ivory", "fair", "sunlit", "lemon", "pale yellow"
-    # ]
+    # List of words describing blond hair
+    blond_hair = [
+        "golden", "honey", "platinum", "sandy", "sun-kissed",
+        "buttery", "ash blond", "straw", "champagne", "caramel",
+        "pearl", "flaxen", "vanilla", "wheat", "light gold",
+        "ivory", "fair", "sunlit", "lemon", "pale yellow"
+    ]
 
     dark_hair = ["dark", "black", "brunette"]
     blond_hair = ["blond", "blonde", "light"]
