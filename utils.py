@@ -138,6 +138,106 @@ def print_per_class(args, eval_results):
 
 
 
+def embedding_regularization(
+    embeddings,
+    transformed_embeddings,
+    reg_type='l2',
+    reg_lambda=1e-3,
+    transformer=None,      # Pass in your learned projection if you want orth regularization
+    gram_lambda=1e-3,
+    ortho_lambda=1e-3
+):
+    """
+    Apply various regularizations to keep transformed embeddings aligned
+    with original embeddings.
+    
+    Args:
+        embeddings: List/Tuple of original embeddings, each shape [batch, 1, d].
+        transformed_embeddings: List/Tuple of transformed embeddings, same shape.
+        reg_type: Which regularization to apply: ['l2','l1','cos','gram','orth','both'].
+        reg_lambda: Base regularization strength for per‐example alignment (l2/l1/cos).
+        transformer: A module with a .weight parameter if using orth regularization.
+        gram_lambda: Strength for Gram‐matrix preservation (if reg_type='gram' or 'both').
+        ortho_lambda: Strength for orthonormal penalty (if reg_type='orth' or 'both').
+
+    Returns:
+        reg_loss: A scalar tensor of total regularization loss.
+    """
+
+    # ----------------------------------------------------------------
+    # 1) Per‐example alignment penalty (your existing code).
+    #    These are your old "stay close" regs (l2, l1, cos).
+    # ----------------------------------------------------------------
+    embeddings_neg1 = embeddings[0]       # shape [batch, 1, d]
+    embeddings_neg2 = embeddings[1]
+    emb_neg1_transf = transformed_embeddings[0]
+    emb_neg2_transf = transformed_embeddings[1]
+
+    # Start with 0.0 and add whichever penalties we want:
+    reg_loss = torch.zeros(1, device=embeddings_neg1.device)[0]
+
+    if reg_type in ('l2', 'l1', 'cos'):
+        if reg_type == 'l2':
+            reg_loss += reg_lambda * (embeddings_neg1 - emb_neg1_transf).pow(2).mean()
+            reg_loss += reg_lambda * (embeddings_neg2 - emb_neg2_transf).pow(2).mean()
+
+        elif reg_type == 'l1':
+            reg_loss += reg_lambda * (embeddings_neg1 - emb_neg1_transf).abs().mean()
+            reg_loss += reg_lambda * (embeddings_neg2 - emb_neg2_transf).abs().mean()
+
+        elif reg_type == 'cos':
+            reg_loss += reg_lambda * (1 - F.cosine_similarity(embeddings_neg1, emb_neg1_transf, dim=-1)).mean()
+            reg_loss += reg_lambda * (1 - F.cosine_similarity(embeddings_neg2, emb_neg2_transf, dim=-1)).mean()
+
+        return reg_loss
+
+    # ----------------------------------------------------------------
+    # 2) Gram‐Matrix Preservation:
+    #    \| (A W)^T (A W) - W^T W \|_F^2
+    #
+    #    If you have more embeddings than two, concatenate them here.
+    # ----------------------------------------------------------------
+    if reg_type in ('gram', 'gramorth'):
+        # Concatenate original embeddings along the batch dimension
+        # e.g. [2*batch, d] after squeezing out the dim=1
+        W  = torch.cat([embeddings_neg1.squeeze(1), embeddings_neg2.squeeze(1)], dim=0)  # [2*B, d]
+        Wt = torch.cat([emb_neg1_transf.squeeze(1), emb_neg2_transf.squeeze(1)], dim=0) # [2*B, d]
+
+        # Compute Gram matrices: G_orig = W W^T, G_trans = (A W)(A W)^T
+        G_orig  = W @ W.T
+        G_trans = Wt @ Wt.T
+
+        # Add Frobenius‐norm difference
+        gram_loss = (G_trans - G_orig).pow(2).mean()
+        reg_loss += gram_lambda * gram_loss
+
+    # ----------------------------------------------------------------
+    # 3) Orthogonality on the projection matrix A:
+    #    \| A^T A - I \|_F^2
+    #
+    #    We assume 'transformer' is either:
+    #      - a nn.Linear with .weight of shape [d, d], or
+    #      - your custom model with an attribute `transformer.weight`.
+    # ----------------------------------------------------------------
+    if reg_type in ('orth', 'gramorth'):
+        if transformer is None:
+            raise ValueError("transformer must be provided if reg_type requires orthonormal regularization.")
+
+        # Here we assume 'transformer' is a simple linear layer named 'transformer.transformer'
+        # If yours is just 'transformer.weight', change accordingly:
+        A = transformer.transformer.weight  # shape [d, d]
+
+        I = torch.eye(A.shape[0], device=A.device, dtype=A.dtype)
+        orth_loss = (A.T @ A - I).pow(2).mean()
+
+        reg_loss += ortho_lambda * orth_loss
+
+    return reg_loss
+
+
+
+
+
 def contrastive_loss(embeddings, margin=0.5):
     """
     Compute contrastive loss using cosine similarity for given positive and negative pairs.
@@ -172,6 +272,7 @@ def contrastive_loss(embeddings, margin=0.5):
     return loss
 
 
+
 def sentence_list_to_embedding(args, model, sentences):
     st = [clip.tokenize(sentence).to(args.device) for sentence in sentences]
     se = [model.encode_text(token) for token in st]
@@ -194,6 +295,9 @@ def train_transformation(args, model, textloader, transformer):
             
             # loss
             loss = contrastive_loss(transformed_embeddings)
+            if args.reg_lambda > 0 and args.reg_type is not None:
+                reg_loss = embedding_regularization(embeddigs_list, transformed_embeddings, args.reg_type, args.reg_lambda, transformer, args.reg_lambda, args.reg_lambda)
+                loss += reg_loss
             # loss = sim_loss(transformed_embeddings)
 
             # backward pass

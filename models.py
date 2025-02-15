@@ -1,9 +1,12 @@
 import torch
 
 class embedding_transformer(torch.nn.Module):
-    def __init__(self, embed_dim = 768):
+    def __init__(self, embed_dim = 768, identity=False):
         super(embedding_transformer, self).__init__()
         self.transformer = torch.nn.Linear(embed_dim, embed_dim, bias=False)
+        if identity:
+            "Got identity inititalization"
+            self.transformer.weight.data = torch.eye(embed_dim, dtype=torch.float32)
     def forward(self, x):
         x = self.transformer(x)
         return x
@@ -36,7 +39,11 @@ def get_transformer(args):
         embed_dim = 1024 
 
     if args.num_bases == 0:
-        transformer = embedding_transformer(embed_dim=embed_dim)
+        if args.init_weight == 'i':
+            print("Got identity inititalization")
+            transformer = embedding_transformer(embed_dim=embed_dim, identity=True)
+        else:
+            transformer = embedding_transformer(embed_dim=embed_dim)
     else:
         transformer = EmbeddingOrthogonalizer(embed_dim=embed_dim, num_bases=args.num_bases)
         

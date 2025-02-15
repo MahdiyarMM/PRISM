@@ -80,7 +80,7 @@ def main(args):
 
     transformer = None
     P = None
-
+    
     if args.mitigation is not None:
         if args.mitigation == 'orth' or args.init_weight == 'orth':
             if args.dataset == 'celeba':
@@ -95,6 +95,7 @@ def main(args):
             transformer = get_transformer(args)
             if args.init_weight == 'orth' and args.num_bases == 0:
                 transformer.transformer.weight.data = P
+
             # transformer.load_state_dict(torch.load('transformer.pth'))
             train_transformation(args, model, text_loader, transformer)
             
@@ -151,7 +152,11 @@ if __name__ == "__main__":
     args.add_argument('--wd', type=float, default=0
                         , help='Weight decay for training the transformation')
     args.add_argument('--init_weight', type=str.lower, default='random'
-                        , help='How to initialize the weights [random, orth]')
+                        , help='How to initialize the weights [random, orth, I]')
+    args.add_argument('--reg_type', type=str.lower, default=None
+                        , help='Embedding regularization [None, l1, l2, cos, gram, orth, gram_orth]')
+    args.add_argument('--reg_lambda', type=float, default=1e-3
+                        , help='Regularization strength')
 
     args = args.parse_args()
     args.device = ['cuda' if torch.cuda.is_available() else 'cpu'][0]
