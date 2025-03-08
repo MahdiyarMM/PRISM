@@ -20,7 +20,7 @@ import wandb
 def main(args):
     torch.manual_seed(args.seed)
     if args.wandb is not None:
-        wandb.init(project='CLIPSB',name=args.wandb, config=args)
+        wandb.init(project='Project_name',name=args.wandb, config=args)
 
     #Load CLIP
     model, preprocess = clip.load(args.CLIP_model , device=args.device)
