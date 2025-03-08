@@ -20,55 +20,6 @@ def generate_random_list(n, m, seed=42):
     return random_list.tolist()  # Convert to a Python list
 
 
-# class Bird_SSL_Dataset(Dataset):
-#     def __init__(self, birds, backgrounds, num_samples=100):
-#         super().__init__()
-#         self.num_samples = num_samples
-        
-#         # Combine birds and backgrounds for sampling
-#         self.birds = birds[0] + birds[1]
-#         self.backgrounds = backgrounds[0] + backgrounds[1]
-        
-#         # Create bird type labels
-#         self.bird_type_labels = {bird: 0 for bird in birds[0]}  # 0 for land birds
-#         self.bird_type_labels.update({bird: 1 for bird in birds[1]})  # 1 for water birds
-        
-#         # Create background type labels
-#         self.background_type_labels = {bg: 0 for bg in backgrounds[1]}  # 0 for land background
-#         self.background_type_labels.update({bg: 1 for bg in backgrounds[0]})  # 1 for water background
-    
-#     def __len__(self):
-#         return self.num_samples
-    
-#     def __getitem__(self, idx):
-#         # Randomly sample a bird and a background
-#         bird1 = self.birds[torch.randint(len(self.birds), (1,)).item()]
-#         background1 = self.backgrounds[torch.randint(len(self.backgrounds), (1,)).item()]
-
-#         bird2 = self.birds[torch.randint(len(self.birds), (1,)).item()]
-#         while bird2 == bird1:
-#             bird2 = self.birds[torch.randint(len(self.birds), (1,)).item()]
-        
-#         background2 = self.backgrounds[torch.randint(len(self.backgrounds), (1,)).item()]
-#         while background2 == background1:
-#             background2 = self.backgrounds[torch.randint(len(self.backgrounds), (1,)).item()]
-
-        
-
-#         # Create the sentence for negative samples
-#         sentence_neg_1 = f"A photo of a {bird1}"
-#         sentence_neg_2 = f"A photo of a {bird2}"
-        
-#         # create the sentence for positive samples
-#         sentence_pos_1 = f"A photo of a {bird1} in a {background1}."
-#         sentence_pos_2 = f"A photo of a {bird1} in a {background2}."
-
-#         sentences = [sentence_neg_1, sentence_neg_2, sentence_pos_1, sentence_pos_2]
-
-
-        
-#         return sentences
-
 class Bird_SSL_Dataset(Dataset):
     def __init__(self, birds, backgrounds, num_samples=100, seed = 42):
         super().__init__()
@@ -236,126 +187,35 @@ class Celeb_SSL_Dataset(Dataset):
 
 def get_SSL_dataset(args):
     # Define lists of birds and backgrounds
-    land_birds = [
-        "sparrow", "robin", "finch", "woodpecker", "canary", "hawk", "falcon", 
-        "eagle", "owl", "crow", "pigeon", "dove", "cardinal", "jay", "wren", 
-        "magpie", "partridge", "quail", "pheasant", "mockingbird"
-    ]
 
-    water_birds = [
-        "duck", "swan", "pelican", "heron", "flamingo", "seagull", "penguin", 
-        "albatross", "cormorant", "grebe", "loon", "kingfisher", "stork", "crane", 
-        "ibis", "sandpiper", "tern", "plover", "puffin", "shearwater"
-    ]
+
+    with open("data/land_birds.txt", "r") as file:
+        land_birds = [line.strip() for line in file]
+
+    
+    with open("data/water_birds.txt", "r") as file:
+        water_birds = [line.strip() for line in file]
 
     birds = [land_birds , water_birds]
 
-    water_backgrounds = ["lake", "sea", "ocean", "river", "pond", "stream", "marsh", "bay", "lagoon", "waterfall"]
-    ground_backgrounds = ["forest", "field", "desert", "mountain", "garden", "savannah", "park", "backyard", "canyon", "cliff"]
+    with open("data/water_backgrounds.txt", "r") as file:
+        water_backgrounds = [line.strip() for line in file]
+    with open("data/ground_backgrounds.txt", "r") as file:
+        ground_backgrounds = [line.strip() for line in file]
 
     backgrounds = [water_backgrounds , ground_backgrounds]
 
 
 
-    # List of male celebrities
-    # List of male celebrities
-    male_celebrities = [
-        "Brad Pitt", "Leonardo DiCaprio", "Chris Hemsworth", "Robert Downey Jr.", "Dwayne Johnson",
-        "Ryan Gosling", "Tom Holland",  
-        "Will Smith", "Keanu Reeves", "Idris Elba", "Chris Evans", "Hugh Jackman",
-        "Daniel Craig", "Henry Cavill", 
-        "Jason Momoa", "Jake Gyllenhaal", "Tom Hardy", "Michael B. Jordan", "Mark Ruffalo",
-        "Matthew McConaughey", "Ryan Reynolds", 
-        "Timothée Chalamet", "Ben Affleck", "Paul Rudd", "Oscar Isaac", "Christian Bale",
-        "Johnny Depp", "Eddie Redmayne"
-    ]
-
-    # List of female celebrities
-    female_celebrities = [
-        "Scarlett Johansson", "Angelina Jolie", "Jennifer Lawrence", "Margot Robbie", "Emma Watson",
-        "Gal Gadot", "Zendaya",  
-        "Anne Hathaway", "Saoirse Ronan", "Natalie Portman", "Emma Stone", "Priyanka Chopra",
-        "Sandra Bullock", "Nicole Kidman", 
-        "Charlize Theron", "Amy Adams", "Cate Blanchett", "Jessica Chastain", "Emily Blunt",
-        "Lupita Nyong'o", "Meryl Streep", 
-        "Rihanna", "Selena Gomez", "Taylor Swift", "Lady Gaga", "Beyoncé",
-        "Ariana Grande", "Kylie Jenner"
-    ]
-
-    # male_celebrities = ['man', 'male', 'mester']
-    # female_celebrities = ['woman', 'female', 'lady']
-
-    celebs = [male_celebrities , female_celebrities]
-
-    # # List of words describing dark hair
-    dark_hair = [
-        "jet black", "raven", "midnight", "onyx", "charcoal",
-        "ebony", "deep brown", "espresso", "mahogany", "sable",
-        "chocolate", "ink", "coal", "obsidian", "smoky",
-        "shadowy", "chestnut", "mocha", "brunette", "noir"
-    ]
-
-    # List of words describing blond hair
-    blond_hair = [
-        "golden", "honey", "platinum", "sandy", "sun-kissed",
-        "buttery", "ash blond", "straw", "champagne", "caramel",
-        "pearl", "flaxen", "vanilla", "wheat", "light gold",
-        "ivory", "fair", "sunlit", "lemon", "pale yellow"
-    ]
-
-    dark_hair = ["dark", "black", "brunette"]
-    blond_hair = ["blond", "blonde", "light"]
-
-
-    hair = [dark_hair , blond_hair]
-
-
-    scene_descriptions = [
-        "This is a photo of a famous *Gender* actor with *hair*, standing on the red carpet with a confident smile in a tailored suit.",
-        "This is a photo of a well-known *Gender* athlete with *hair*, giving an interview after an intense game, sweat still on their brow.",
-        "This is a photo of a charismatic *Gender* singer with *hair*, addressing fans at a concert, holding a microphone.",
-        "This is a photo of a *Gender* movie star with *hair*, attending an exclusive film festival, dressed in a designer tuxedo.",
-        "This is a photo of a famous *Gender* singer with *hair*, wearing a leather jacket and a beanie, walking through an airport.",
-        "This is a photo of a *Gender* comedian with *hair*, performing on stage, making the audience burst into laughter.",
-        "This is a photo of a renowned *Gender* director with *hair*, discussing their latest film at a press conference.",
-        "This is a photo of a *Gender* fashion model with *hair*, posing for a high-end magazine photoshoot.",
-        "This is a photo of a famous *Gender* TV host with *hair*, interviewing a celebrity on their late-night show.",
-        "This is a photo of a *Gender* influencer with *hair*, taking selfies with fans at a popular event.",
-        "This is a photo of a glamorous *Gender* actress with *hair*, posing at an exclusive event in an elegant evening gown.",
-        "This is a photo of a talented *Gender* musician with *hair*, playing the piano on stage with deep concentration.",
-        "This is a photo of a *Gender* singer with *hair*, holding a microphone, dazzling the audience with powerful vocals.",
-        "This is a photo of a famous *Gender* athlete with *hair*, celebrating after winning a gold medal.",
-        "This is a photo of a well-known *Gender* actress with *hair*, attending a movie premiere, surrounded by flashing cameras.",
-        "This is a photo of a *Gender* dancer with *hair*, performing gracefully on a grand stage in a vibrant costume.",
-        "This is a photo of a *Gender* director with *hair*, answering questions during a panel at a film festival.",
-        "This is a photo of a *Gender* supermodel with *hair*, walking the runway at a prestigious fashion show.",
-        "This is a photo of a *Gender* talk show host with *hair*, engaging with a guest during a lively interview.",
-        "This is a photo of a *Gender* social media star with *hair*, posing for pictures with adoring fans."]
-
-    # List of gender replacements
-    genders = ["male", "female"]
-
-    # List of blond-haired descriptions
-    blond_hair_descriptions = [
-        "short blond hair",
-        "golden blond waves",
-        "platinum blond bob",
-        "long blond curls",
-        "sun-kissed blond highlights",
-        "icy blond pixie cut"
-    ]
-
-    # List of dark-haired descriptions
-    dark_hair_descriptions = [
-        "short dark hair",
-        "sleek black ponytail",
-        "wavy dark brown locks",
-        "long jet-black curls",
-        "shoulder-length dark bob",
-        "deep chestnut waves"
-    ]
-
-
+    with open("data/scene_descriptions.txt", "r") as file:
+        scene_descriptions = [line.strip() for line in file]
+    with open("data/genders.txt", "r") as file:
+        genders = [line.strip() for line in file]
+    with open("data/blond_hair_descriptions.txt", "r") as file:
+        blond_hair_descriptions = [line.strip() for line in file]
+    with open("data/dark_hair_descriptions.txt", "r") as file:
+        dark_hair_descriptions = [line.strip() for line in file]
+        
     if args.dataset == 'celeba':
         # textset = Celeb_SSL_Dataset(celebs, hair, num_samples=args.num_samples)
         textset = Celeb_SSL_Dataset(args, scene_descriptions, genders, blond_hair_descriptions, dark_hair_descriptions, num_samples=args.num_samples)

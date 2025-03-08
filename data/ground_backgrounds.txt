@@ -1,0 +1,10 @@
+forest
+field
+desert
+mountain
+garden
+savannah
+park
+backyard
+canyon
+cliff

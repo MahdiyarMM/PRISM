@@ -1,0 +1,10 @@
+lake
+sea
+ocean
+river
+pond
+stream
+marsh
+bay
+lagoon
+waterfall

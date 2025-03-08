@@ -4,12 +4,14 @@ __pycache__/
 *$py.class
 data/celebA_v1.0/
 data/waterbirds_v1.0/
-dev.ipynb
+*.ipynb
 wandb/
 *.pth
-
+Results/*
 # C extensions
 *.so
+*.pdf
+*.pt
 
 # Distribution / packaging
 .Python
