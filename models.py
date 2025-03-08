@@ -40,7 +40,7 @@ def get_transformer(args):
 
     if args.num_bases == 0:
         if args.init_weight == 'i':
-            print("Got identity inititalization")
+            print("Got identity initialization")
             transformer = embedding_transformer(embed_dim=embed_dim, identity=True)
         else:
             transformer = embedding_transformer(embed_dim=embed_dim)
