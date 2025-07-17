@@ -135,5 +135,5 @@ If you find PRISM useful, please cite our ICCV 2025 paper:
 
 ## License
 
-This project is released under the **MIT License**. See [LICENSE](LICENSE) for details.
+This project is released under the **MIT License**.
 
