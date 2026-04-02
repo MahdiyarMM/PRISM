@@ -1,6 +1,6 @@
 # PRISM: Reducing Spurious Implicit Biases in Vision-Language Models with LLM-Guided Embedding Projection
 ## **Accpeted at ICCV 2025**   
-[paper](https://arxiv.org/pdf/2507.08979v1)
+[paper]([https://arxiv.org/pdf/2507.08979v1](https://openaccess.thecvf.com/content/ICCV2025/papers/Molahasani_PRISM_Reducing_Spurious_Implicit_Biases_in_Vision-Language_Models_with_LLM-Guided_ICCV_2025_paper.pdf))
 
 **PRISM** 
 (Projection-based Reduction of Implicit Spurious bias in vision-language Models) is a data‑free, task‑agnostic framework for mitigating spurious correlations in Vision-Language Models (VLMs) such as CLIP. PRISM leverages Large Language Models (LLMs) to dynamically identify biases and then learns an embedding projection that removes them while preserving semantic alignment.
