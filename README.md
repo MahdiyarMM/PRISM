@@ -124,14 +124,12 @@ For full comparisons and ablations (LLM choice, number of descriptions, margin s
 If you find PRISM useful, please cite our ICCV 2025 paper:
 
 ```bibtex
-@misc{molahasani2025prism,
-      title={PRISM: Reducing Spurious Implicit Biases in Vision-Language Models with LLM-Guided Embedding Projection}, 
-      author={Mahdiyar Molahasani and Azadeh Motamedi and Michael Greenspan and Il-Min Kim and Ali Etemad},
-      year={2025},
-      eprint={2507.08979},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2507.08979}, 
+@inproceedings{molahasani2025prism,
+  title={Prism: Reducing spurious implicit biases in vision-language models with llm-guided embedding projection},
+  author={Molahasani, Mahdiyar and Motamedi, Azadeh and Greenspan, Michael and Kim, Il-Min and Etemad, Ali},
+  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  pages={688--697},
+  year={2025}
 }
 ```
 
